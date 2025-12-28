@@ -1,70 +1,74 @@
-const nix = {
-    nix: {
-        name: "menu",
-        aliases: ["help", "commands"],
-        author: "Samy Charles",
-        version: "2.0",
-        cooldowns: 5,
-        role: 0,
-        description: "Show kawaii AESTHER menu",
-        category: "INFO",
-        guide: "Use: /menu"
-    },
+module.exports = {
+  nix: {
+    name: 'menu',
+    prefix: false,
+    role: 0,
+    category: 'utility',
+    aliases: ['commands'],
+    author: 'ArYAN',
+    version: '0.0.1',
+  },
 
-    onStart: async function ({ message, role }) {
-
-        const userName = message.from?.first_name || "User";
-        const myName = "Samy Charles";
-        const myUID = "61582382664051";
-        const prefix = "/";
-
-        // ✅ Récupération des commandes NIX
-        const cmds = global.nix?.commands;
-        if (!cmds || !(cmds instanceof Map)) {
-            return message.reply("❌ Menu system error: commands not loaded.");
-        }
-
-        // 🔹 Trier les commandes par catégorie
-        const categories = {};
-        for (const [name, cmd] of cmds.entries()) {
-            if (cmd.nix?.role > role) continue;
-            const cat = cmd.nix?.category || "Misc";
-            if (!categories[cat]) categories[cat] = [];
-            categories[cat].push(name);
-        }
-
-        // 🌸 Construire le menu kawaii
-        let msg = `
-╭━━〔 🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞ 〕━━┈⊷
-┃🪐╭───────────────────────────
-┃🪐│ 🤖 BOT : 𝗔𝗘𝗦𝗧𝗛𝗘𝗥 🌸
-┃🪐│ 👤 USER : ⵌ︳「${userName}」
-┃🪐│ 👑 OWNER : ${myName} | ${myUID}
-┃🪐│ 💻 DEV : ${myName}
-┃🪐│ 🧬 VERSION : 2.0 Kawaii
-┃🪐│ 🌍 MODE : Public 🍀
-┃🪐│ ⚙️ PREFIX : [ ${prefix} ]
-┃🪐╰───────────────────────────
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━┈⊷
-
-╭━━〔 🪐 COMMAND MENU 🌸✨ 〕━━┈⊷
-`;
-
-        Object.keys(categories).sort().forEach(cat => {
-            msg += `┃🪐│ ✧ ${cat.toUpperCase()} 🍀\n`;
-            categories[cat].sort().forEach(cmdName => {
-                msg += `┃🪐│    ➳ ${prefix}${cmdName}\n`;
-            });
-            msg += "┃🪐│ ────────────────────────\n";
-        });
-
-        msg += `
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━┈⊷
-💌 Powered by ${myName} 🌸✨
-`;
-
-        return message.reply(msg);
+  async onStart({ message, args }) {
+    if (!global.teamnix || !global.teamnix.cmds) {
+      return message.reply("Command collection is not available.");
     }
-};
+    const commands = global.teamnix.cmds;
 
-module.exports = nix;
+    if (args.length) {
+      const query = args[0].toLowerCase();
+      const cmd = [...commands.values()].find(
+        c => c.nix.name === query || (c.nix.aliases && c.nix.aliases.includes(query))
+      );
+      if (!cmd) return message.reply(`No command called “${query}”.`);
+      const info = cmd.nix;
+      const detail = `
+╭─────────────────────◊
+│ ▸ Command: ${info.name}
+│ ▸ Aliases: ${info.aliases?.length ? info.aliases.join(', ') : 'None'}
+│ ▸ Can use: ${info.role === 2 ? 'Admin Only' : info.role === 1 ? 'VIP Only' : 'All Users'}
+│ ▸ Category: ${info.category?.toUpperCase() || 'UNCATEGORIZED'}
+│ ▸ PrefixEnabled?: ${info.prefix === false ? 'False' : 'True'}
+│ ▸ Author: ${info.author || 'Unknown'}
+│ ▸ Version: ${info.version || 'N/A'}
+╰─────────────────────◊
+      `.trim();
+      return message.reply(detail);
+    }
+
+    const cats = {};
+    [...commands.values()]
+      .filter((command, index, self) =>
+        index === self.findIndex((c) => c.nix.name === command.nix.name)
+      )
+      .forEach(c => {
+        const cat = c.nix.category || 'UNCATEGORIZED';
+        if (!cats[cat]) {
+          cats[cat] = [];
+        }
+        if (!cats[cat].includes(c.nix.name)) {
+          cats[cat].push(c.nix.name);
+        }
+      });
+
+    let msg = '';
+    Object.keys(cats).sort().forEach(cat => {
+      msg += `╭─────『 ${cat.toUpperCase()} 』\n`;
+      cats[cat].sort().forEach(n => {
+        msg += `│ ▸ ${n}\n`;
+      });
+      msg += `╰──────────────\n`;
+    });
+
+    msg += `
+╭──────────────◊
+│ » Total commands: ${[...new Set(commands.values())].length}
+│ » A Powerful Telegram bot
+│ » @Samy_Charles_02
+╰──────────◊
+「 Nix bot 」
+    `.trim();
+
+    await message.reply(msg);
+  }
+};
