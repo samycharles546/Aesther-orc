@@ -1,6 +1,6 @@
 const nix = {
     nix: {
-        name: "stars",
+        name: "start",
         aliases: [],
         author: "Samy Charles",
         version: "1.0",
