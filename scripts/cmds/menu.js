@@ -1,5 +1,3 @@
-const fs = require("fs");
-
 const nix = {
     nix: {
         name: "menu",
@@ -13,23 +11,29 @@ const nix = {
         guide: "Use: /menu"
     },
 
-    onStart: async function ({ message, role, commands }) {
+    onStart: async function ({ message, role }) {
 
         const userName = message.from?.first_name || "User";
         const myName = "Samy Charles";
         const myUID = "61582382664051";
         const prefix = "/";
 
-        // 🔹 Build categories
+        // ✅ Récupération des commandes NIX
+        const cmds = global.nix?.commands;
+        if (!cmds || !(cmds instanceof Map)) {
+            return message.reply("❌ Menu system error: commands not loaded.");
+        }
+
+        // 🔹 Trier les commandes par catégorie
         const categories = {};
-        for (const [name, cmd] of commands) {
+        for (const [name, cmd] of cmds.entries()) {
             if (cmd.nix?.role > role) continue;
             const cat = cmd.nix?.category || "Misc";
             if (!categories[cat]) categories[cat] = [];
             categories[cat].push(name);
         }
 
-        // 🌸 Build kawaii menu
+        // 🌸 Construire le menu kawaii
         let msg = `
 ╭━━〔 🌸✨ ﹝@ 𝗔𝗘𝗦𝗧𝗛𝗘𝗥🍀🥙﹞ 〕━━┈⊷
 ┃🪐╭───────────────────────────
